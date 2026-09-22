@@ -6,7 +6,7 @@ Flow: **Countdown → [ENTER] → Boot → Remote-login hijack → "REMOTE USER 
 
 ## Run locally
 
-Any static server (required — don't open via `file://`, Drive iframes need http):
+Any static server (required — don't open via `file://`, video + fonts need http):
 
 ```bash
 cd wcfin
@@ -26,8 +26,8 @@ Test shortcuts (for you, not in UI):
 Edit **`js/config.js`**:
 
 1. `countdownTarget` — your launch date, ISO format, e.g. `"2026-10-31T20:00:00-04:00"`.
-2. `intro.driveFileId` + `chapters[].driveFileId` — paste each Google Drive link or File ID.
-3. Optional `mp4Url` — if you ever host direct `.mp4`s, playback switches to a real `<video>` tag with true muted greyscale thumbnails. Closing is always manual via [X].
+2. `intro.mp4Url` + `chapters[].mp4Url` — full Cloudflare R2 `.mp4` URLs (one per chapter when ready).
+3. Closing is always manual via [X]. Thumbnails are muted + greyscale, playback is color + sound.
 
 Chapter order (top-left → bottom-right): INTRODUCTION, CRUELLA, MICAH, VAGABOND, HAYWOOD, CONCLUSION.
 
@@ -39,10 +39,10 @@ Chapter order (top-left → bottom-right): INTRODUCTION, CRUELLA, MICAH, VAGABON
 
 No build step. Fonts are self-hosted in `fonts/VT323/`. No trackers, no backend.
 
-## Drive notes (important)
+## Video notes (R2 only — no Drive)
 
-- Share each Drive video as **Anyone with the link can view**.
-- Thumbnails: muted + greyscale via CSS (`filter: grayscale(1)`). The site first tries a muted looping `<video>`; if Drive blocks it, it falls back to the Drive preview iframe (also greyscaled).
+- Upload each chapter to Cloudflare R2 as `.mp4` (H.264 + AAC) and paste the public URL into `mp4Url`.
+- Thumbnails: muted + greyscale via CSS (`filter: grayscale(1)`), snug-fit via `object-fit: cover`.
 - Modal playback is in full color with sound (user gesture = click, so autoplay with sound works).
 - All popups (intro + chapters) close manually via the [X] button top-right. No auto-close.
 
@@ -64,8 +64,8 @@ both places. If the first modal says the signal is weak / file is missing:
    Same for GitHub Pages — that part is already http(s), so fine.
 2. Keep folder structure intact: `index.html` + `js/config.js` +
    `js/sound.js` + `js/app.js`. If `config.js` fails to load the player
-   falls back to the placeholder ID and logs a warning in DevTools console.
-3. Drive sharing: each video must be **Anyone with the link can view**.
-4. Adblock / tracking prevention can block `drive.google.com` previews —
-   test in a clean window and check DevTools console → Network for blocked
-   `.../preview` requests.
+   falls back to the built-in R2 link and logs a warning in DevTools console.
+3. R2 bucket must allow public access (Public Development URL or custom
+   domain) so the `.mp4` returns `video/mp4` to visitors.
+4. Adblock / tracking prevention can block media — test in a clean window
+   and check DevTools console → Network for blocked `.mp4` requests.

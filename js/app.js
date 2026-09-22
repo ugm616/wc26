@@ -3,40 +3,27 @@
   "use strict";
 
   const $ = (sel) => document.querySelector(sel);
-  const FALLBACK_DRIVE_ID = "1kWqoeuCto9GgYdZIpkwO6rv2lF5XMmCi";
+  // R2 only — no Google Drive anywhere in this build.
+  const FALLBACK_MP4 = "https://pub-472b1ae435af4460ab024c0b2a8f1365.r2.dev/intro.mp4";
   const FALLBACK_CHAPTERS = [
-    { name: "INTRODUCTION", driveFileId: FALLBACK_DRIVE_ID, mp4Url: "" },
-    { name: "CRUELLA", driveFileId: FALLBACK_DRIVE_ID, mp4Url: "" },
-    { name: "MICAH", driveFileId: FALLBACK_DRIVE_ID, mp4Url: "" },
-    { name: "VAGABOND", driveFileId: FALLBACK_DRIVE_ID, mp4Url: "" },
-    { name: "HAYWOOD", driveFileId: FALLBACK_DRIVE_ID, mp4Url: "" },
-    { name: "CONCLUSION", driveFileId: FALLBACK_DRIVE_ID, mp4Url: "" }
+    { name: "INTRODUCTION", mp4Url: FALLBACK_MP4 },
+    { name: "CRUELLA", mp4Url: FALLBACK_MP4 },
+    { name: "MICAH", mp4Url: FALLBACK_MP4 },
+    { name: "VAGABOND", mp4Url: FALLBACK_MP4 },
+    { name: "HAYWOOD", mp4Url: FALLBACK_MP4 },
+    { name: "CONCLUSION", mp4Url: FALLBACK_MP4 }
   ];
-  const defaults = { countdownTarget: "", remoteUsername: "BULLETPROOF", remotePassword: "", intro: { title: "WC26.VID", driveFileId: FALLBACK_DRIVE_ID, mp4Url: "" }, chapters: FALLBACK_CHAPTERS };
+  const defaults = { countdownTarget: "", remoteUsername: "BULLETPROOF", remotePassword: "", intro: { title: "WC26.VID", mp4Url: FALLBACK_MP4 }, chapters: FALLBACK_CHAPTERS };
   const cfg = Object.assign({}, defaults, window.WCFIN_CONFIG || {});
   cfg.intro = Object.assign({}, defaults.intro, (window.WCFIN_CONFIG && window.WCFIN_CONFIG.intro) || {});
   // Chapters: prefer config, but NEVER leave the grid empty — fall back
-  // to the 6 placeholder chapters so the desktop always shows 6 screens.
+  // to the 6 R2 chapters so the desktop always shows 6 screens.
   const cfgChapters = window.WCFIN_CONFIG && Array.isArray(window.WCFIN_CONFIG.chapters) ? window.WCFIN_CONFIG.chapters : [];
   cfg.chapters = cfgChapters.length ? cfgChapters : FALLBACK_CHAPTERS.slice();
   if (!window.WCFIN_CONFIG) {
-    console.warn("[BPM_OS] js/config.js did not load — using 6 fallback placeholder chapters. Serve over http(s), not file://, and keep js/ next to index.html.");
+    console.warn("[BPM_OS] js/config.js did not load — using 6 fallback R2 chapters. Serve over http(s), not file://, and keep js/ next to index.html.");
   } else if (!cfgChapters.length) {
-    console.warn("[BPM_OS] config.js has no chapters — using 6 fallback placeholders.");
-  }
-
-  // ---------- Drive URL helpers ----------
-  function driveId(raw) {
-    if (window.wcfinExtractDriveId) return window.wcfinExtractDriveId(raw);
-    if (!raw) return "";
-    const m = String(raw).match(/[-\w]{25,}/);
-    return m ? m[0] : String(raw).trim();
-  }
-  function previewUrl(id) {
-    return "https://drive.google.com/file/d/" + id + "/preview";
-  }
-  function directUrl(id) {
-    return "https://drive.google.com/uc?export=download&id=" + id;
+    console.warn("[BPM_OS] config.js has no chapters — using 6 fallback R2 chapters.");
   }
 
   // ---------- Screens ----------
@@ -287,57 +274,46 @@
 
   function clearMedia() {
     if (!mWrap) return;
-    mWrap.querySelectorAll("video, iframe, .modal-scan").forEach((el) => el.remove());
+    mWrap.querySelectorAll("video, .modal-scan").forEach((el) => el.remove());
   }
 
-  function buildMedia(driveFileId, mp4Url) {
-    const id = driveId(driveFileId) || FALLBACK_DRIVE_ID;
-    if (mp4Url) {
-      const v = document.createElement("video");
-      v.controls = true;
-      v.autoplay = true;
-      v.playsInline = true;
-      v.preload = "auto";
-      v.src = mp4Url;
-      v.style.filter = "none";
-      // No auto-close: visitor closes manually via [X] (top-right).
-      mWrap.appendChild(v);
-      const scan = document.createElement("div");
-      scan.className = "modal-scan";
-      mWrap.appendChild(scan);
-      return;
-    }
-    // Google Drive preview (only reliable way for Drive files).
-    // Manual close only via [X] top-right — no auto-end.
-    const f = document.createElement("iframe");
-    f.src = previewUrl(id);
-    f.allow = "autoplay; fullscreen; encrypted-media";
-    f.allowFullscreen = true;
-    f.title = "video player";
-    // If Drive refuses to load (offline, blocked 3rd-party cookies,
-    // file not shared as "Anyone with the link"), surface a hint
-    // inside the modal instead of a black box.
-    f.addEventListener("load", () => {
-      // Preview iframes give no further signal; hide any stale boot text.
-      if (mBoot) mBoot.classList.add("hidden");
-    });
-    mWrap.appendChild(f);
+  function addScan() {
     const scan = document.createElement("div");
     scan.className = "modal-scan";
     mWrap.appendChild(scan);
-    // Safety net: if the iframe never fires load (network/adblock),
-    // show a hint after 8s but keep the frame (it may still appear).
-    setTimeout(() => {
-      try {
-        if (overlay.classList.contains("open") && mWrap.contains(f) && !f.contentWindow) throw 0;
-      } catch (e) {
-        if (mBoot) { mBoot.classList.remove("hidden"); mBoot.textContent = "SIGNAL WEAK — CHECK CONNECTION OR DRIVE SHARING // [X] TO CLOSE"; }
-      }
-    }, 8000);
+  }
+
+  // R2 direct .mp4 only — true autoplay with sound (modal opens from a
+  // click, so transient activation allows play() with audio).
+  // No auto-close: visitor closes manually via [X] (top-right).
+  function buildMedia(mp4Url) {
+    const src = mp4Url || FALLBACK_MP4;
+    if (!src) {
+      if (mBoot) { mBoot.classList.remove("hidden"); mBoot.textContent = "SIGNAL MISSING — CHECK config.js mp4Url // [X] TO CLOSE"; }
+      return;
+    }
+    const v = document.createElement("video");
+    v.controls = true;
+    v.autoplay = true;
+    v.playsInline = true;
+    v.preload = "auto";
+    v.src = src;
+    v.style.filter = "none";
+    v.addEventListener("playing", () => {
+      if (mBoot) mBoot.classList.add("hidden");
+    });
+    v.addEventListener("error", () => {
+      if (mBoot) { mBoot.classList.remove("hidden"); mBoot.textContent = "SIGNAL LOST — CHECK R2 LINK // [X] TO CLOSE"; }
+    });
+    mWrap.appendChild(v);
+    addScan();
+    const kick = () => { try { const p = v.play(); if (p && p.catch) p.catch(() => {}); } catch (e) {} };
+    v.addEventListener("canplay", kick);
+    kick();
   }
 
   function openModal(opts) {
-    // opts: { title, driveFileId, mp4Url, intro }
+    // opts: { title, mp4Url, intro }
     // Close is manual only via [X] top-right — no auto-end.
     clearMedia();
     isIntroOpen = !!opts.intro;
@@ -355,7 +331,7 @@
       mWindow.classList.add("glitch-hit");
       setTimeout(() => mWindow.classList.remove("glitch-hit"), 450);
       if (mBoot) mBoot.classList.add("hidden");
-      buildMedia(opts.driveFileId, opts.mp4Url);
+      buildMedia(opts.mp4Url);
     }, 480);
   }
 
@@ -391,8 +367,7 @@
     const intro = cfg.intro || {};
     openModal({
       title: intro.title || "WC26.VID",
-      driveFileId: intro.driveFileId,
-      mp4Url: intro.mp4Url,
+      mp4Url: intro.mp4Url || FALLBACK_MP4,
       intro: true,
     });
   }
@@ -411,7 +386,7 @@
     grid.innerHTML = "";
     const chapters = (cfg.chapters && cfg.chapters.length ? cfg.chapters : FALLBACK_CHAPTERS).slice(0, 6);
     chapters.forEach((ch, i) => {
-      const id = driveId(ch.driveFileId) || FALLBACK_DRIVE_ID;
+      const src = ch.mp4Url || FALLBACK_MP4;
       const num = String(i + 1).padStart(2, "0");
       const tile = document.createElement("button");
       tile.className = "tile";
@@ -421,36 +396,28 @@
       const screen = document.createElement("div");
       screen.className = "tile-screen";
 
-      // Muted greyscale thumbnail.
-      // Drive preview iframe is the reliable base layer (instant
-      // placeholder, same video for all 6 until real links arrive).
-      // If a real direct .mp4 is provided, layer a muted looping
-      // <video> on top; if it fails it hides itself, revealing the
-      // iframe underneath. Drive direct-download URLs are NOT used
-      // as video src (they return HTML confirm pages = black tiles).
-      const f = document.createElement("iframe");
-      f.src = previewUrl(id);
-      // Privacy-friendly + faster tiles: no autoplay param needed,
-      // preview starts paused (muted in spirit — no sound).
-      f.tabIndex = -1;
-      f.setAttribute("aria-hidden", "true");
-      f.setAttribute("loading", "lazy");
-      screen.appendChild(f);
-      if (ch.mp4Url) {
-        const v = document.createElement("video");
-        v.muted = true;
-        v.loop = true;
-        v.autoplay = true;
-        v.playsInline = true;
-        v.preload = "metadata";
-        v.setAttribute("muted", "");
-        v.src = ch.mp4Url;
-        const tryPlay = () => { v.play && v.play().catch(() => {}); };
-        v.addEventListener("canplay", tryPlay);
-        v.addEventListener("error", () => v.remove());
-        screen.appendChild(v);
-        tryPlay();
-      }
+      // Muted greyscale thumbnail, snug-fit (object-fit: cover).
+      // R2 direct .mp4 only — fills the box edge to edge.
+      // On error, tile shows SIGNAL LOST (no Drive fallback).
+      const v = document.createElement("video");
+      v.muted = true;
+      v.loop = true;
+      v.autoplay = true;
+      v.playsInline = true;
+      v.preload = "metadata";
+      v.setAttribute("muted", "");
+      v.src = src;
+      const tryPlay = () => { v.play && v.play().catch(() => {}); };
+      v.addEventListener("canplay", tryPlay);
+      v.addEventListener("error", () => {
+        v.remove();
+        const lost = document.createElement("div");
+        lost.className = "tile-lost";
+        lost.textContent = "SIGNAL LOST";
+        screen.insertBefore(lost, screen.firstChild);
+      });
+      screen.appendChild(v);
+      tryPlay();
 
       const numEl = document.createElement("div");
       numEl.className = "tile-num";
@@ -484,8 +451,7 @@
         sfx("click");
         openModal({
           title: ch.name + ".VID",
-          driveFileId: ch.driveFileId,
-          mp4Url: ch.mp4Url,
+          mp4Url: ch.mp4Url || FALLBACK_MP4,
           intro: false,
         });
       });

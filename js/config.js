@@ -1,5 +1,5 @@
 /* ============================================================
-   WCFIN_OS — EDIT THIS FILE TO GO LIVE
+   BPM_OS — EDIT THIS FILE TO GO LIVE
    ------------------------------------------------------------
    1. COUNTDOWN: set countdownTarget to your launch date/time.
       Use ISO format with timezone, e.g. "2026-12-31T23:59:59Z"
@@ -7,26 +7,14 @@
       visitor's browser. When it hits zero, an [ ENTER ] button
       replaces the countdown.
 
-   2. VIDEOS: all videos are Google Drive files. For each video,
-      paste either the full preview link or just the File ID.
+   2. VIDEOS: direct .mp4 links (Cloudflare R2). Paste the full
+      .mp4 URL into mp4Url for the intro + each chapter.
+      No Google Drive — R2 only.
 
-      Example link:
-        https://drive.google.com/file/d/1kWqoeuCto9GgYdZIpkwO6rv2lF5XMmCi/preview
-      File ID is the part between /d/ and /preview:
-        1kWqoeuCto9GgYdZIpkwO6rv2lF5XMmCi
-
-      You can paste the full link OR just the ID — both work.
-
-    3. CLOSING VIDEOS:
+   3. CLOSING VIDEOS:
       All video popups close manually via the [X] button in the
       top-right of the modal — intro and chapters alike.
       No auto-close on video end.
-
-   4. DIRECT MP4 (optional future upgrade):
-      If you ever host .mp4 files elsewhere, put the full .mp4 URL
-      in mp4Url and the player will use a real <video> tag
-      (true muted greyscale thumbnails). Closing is still manual
-      via [X].
    ============================================================ */
 
 const WCFIN_CONFIG = {
@@ -40,25 +28,17 @@ const WCFIN_CONFIG = {
   // ---- INTRO / MAIN FILE (plays once before desktop) ----
   intro: {
     title: "WC26.VID",
-    // placeholder — same for all until you provide real links
-    driveFileId: "1kWqoeuCto9GgYdZIpkwO6rv2lF5XMmCi",
-    mp4Url: "" // optional direct .mp4 override
+    mp4Url: "https://pub-472b1ae435af4460ab024c0b2a8f1365.r2.dev/intro.mp4"
   },
 
   // ---- 6 CHAPTERS (top-left -> bottom-right) ----
+  // Same R2 file for all 6 until per-chapter links arrive.
   chapters: [
-    { name: "INTRODUCTION", driveFileId: "1kWqoeuCto9GgYdZIpkwO6rv2lF5XMmCi", mp4Url: "" },
-    { name: "CRUELLA",      driveFileId: "1kWqoeuCto9GgYdZIpkwO6rv2lF5XMmCi", mp4Url: "" },
-    { name: "MICAH",        driveFileId: "1kWqoeuCto9GgYdZIpkwO6rv2lF5XMmCi", mp4Url: "" },
-    { name: "VAGABOND",     driveFileId: "1kWqoeuCto9GgYdZIpkwO6rv2lF5XMmCi", mp4Url: "" },
-    { name: "HAYWOOD",      driveFileId: "1kWqoeuCto9GgYdZIpkwO6rv2lF5XMmCi", mp4Url: "" },
-    { name: "CONCLUSION",   driveFileId: "1kWqoeuCto9GgYdZIpkwO6rv2lF5XMmCi", mp4Url: "" }
+    { name: "INTRODUCTION", mp4Url: "https://pub-472b1ae435af4460ab024c0b2a8f1365.r2.dev/intro.mp4" },
+    { name: "CRUELLA",      mp4Url: "https://pub-472b1ae435af4460ab024c0b2a8f1365.r2.dev/intro.mp4" },
+    { name: "MICAH",        mp4Url: "https://pub-472b1ae435af4460ab024c0b2a8f1365.r2.dev/intro.mp4" },
+    { name: "VAGABOND",     mp4Url: "https://pub-472b1ae435af4460ab024c0b2a8f1365.r2.dev/intro.mp4" },
+    { name: "HAYWOOD",      mp4Url: "https://pub-472b1ae435af4460ab024c0b2a8f1365.r2.dev/intro.mp4" },
+    { name: "CONCLUSION",   mp4Url: "https://pub-472b1ae435af4460ab024c0b2a8f1365.r2.dev/intro.mp4" }
   ]
 };
-
-/* Accepts a full Drive URL or a bare ID, returns the bare ID */
-function wcfinExtractDriveId(input) {
-  if (!input) return "";
-  const m = String(input).match(/[-\w]{25,}/);
-  return m ? m[0] : String(input).trim();
-}
