@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>BPM_OS // WC26</title>
+<meta name="description" content="BPM_OS — secure video terminal. 6 chapters. Black and red only.">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='black'/%3E%3Crect x='4' y='4' width='24' height='24' fill='none' stroke='red' stroke-width='2'/%3E%3Crect x='13' y='10' width='6' height='12' fill='red'/%3E%3C/svg%3E">
+<link rel="preload" href="fonts/VT323/VT323-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body class="crt">
+<div id="app">
+
+  <!-- ============ 1. COUNTDOWN ============ -->
+  <section id="screen-countdown" class="screen active" aria-label="Countdown">
+    <div class="sys-label">BPM // SECURE ACCESS TERMINAL</div>
+    <h1 class="sys-title">WC26</h1>
+    <div class="sys-sub">RESTRICTED FILE — AUTHORIZED VIEWERS ONLY</div>
+    <div class="frame" style="margin-top:20px">
+      <div class="corner-row"><span>SYS.COUNTDOWN</span><span>ENCRYPTED</span></div>
+      <div id="countdown-live">
+        <div class="sys-label">TIME TO DECRYPT</div>
+        <div id="countdown-display" aria-live="polite">--:--:--:--</div>
+        <div id="countdown-date">TARGET: ...</div>
+        <div class="hint">SIGNAL LOCKED — WAIT FOR <b>ZERO</b></div>
+      </div>
+      <div id="countdown-expired">
+        <div class="sys-label">DECRYPT COMPLETE</div>
+        <div class="access-big" style="margin:10px 0">CHANNEL OPEN</div>
+        <button id="btn-enter" class="btn btn-blink" type="button">[ ENTER ]</button>
+        <div class="hint">PRESS <b>ENTER</b> TO JACK IN</div>
+      </div>
+    </div>
+    <div class="hint">EDIT LAUNCH DATE IN <b>js/config.js → countdownTarget</b></div>
+    <div class="hint"><button class="link-btn" type="button" data-sound-toggle>[SOUND: ON]</button></div>
+  </section>
+
+  <!-- ============ 2. BOOT ============ -->
+  <section id="screen-boot" class="screen" aria-label="Boot sequence">
+    <div class="frame">
+      <div class="corner-row"><span>BPM BIOS</span><span>v6.1.6</span></div>
+      <div id="boot-log" aria-live="polite"></div>
+      <div class="loadbar"><div id="boot-fill" class="loadbar-fill"></div><div id="boot-pct" class="loadbar-text">LOADING 0%</div></div>
+    </div>
+  </section>
+
+  <!-- ============ 3. REMOTE LOGIN ============ -->
+  <section id="screen-login" class="screen" aria-label="Login">
+    <div class="frame" id="login-box">
+      <div class="corner-row"><span>LOGIN://BPM_OS</span><span>TTY-26</span></div>
+      <div id="login-standby" class="login-line">STANDBY — AWAITING LOCAL LOGIN... <span class="cursor"></span></div>
+      <div id="remote-flash">!! REMOTE USER CONNECTED !!</div>
+      <div id="login-form" style="display:none">
+        <div class="login-field"><span class="k">USERNAME: </span><span id="login-user"></span><span class="cursor"></span></div>
+        <div class="login-field"><span class="k">PASSWORD: </span><span id="login-pass"></span><span class="cursor"></span></div>
+      </div>
+      <div id="login-status" class="login-line"></div>
+    </div>
+    <div class="hint">INCOMING CONNECTION — <b>DO NOT TOUCH KEYBOARD</b></div>
+  </section>
+
+  <!-- ============ 4. ACCESSING FILE ============ -->
+  <section id="screen-access" class="screen" aria-label="Accessing file">
+    <div class="sys-label">REMOTE USER // ACTIVE</div>
+    <div class="access-big">REMOTE USER ACCESSING FILE</div>
+    <div class="frame" style="margin-top:16px">
+      <div class="access-file">▸ WC26.VID <span style="opacity:.7">[VIDEO FILE]</span></div>
+      <div class="loadbar"><div id="access-fill" class="loadbar-fill"></div><div id="access-pct" class="loadbar-text">OPENING FILE... 0%</div></div>
+    </div>
+  </section>
+
+  <!-- ============ 5. DESKTOP ============ -->
+  <section id="screen-desktop" class="screen" aria-label="Desktop">
+    <div id="desktop-topbar">
+      <span class="dot"></span>
+      <span id="desktop-title">BPM_OS // v6.1.6</span>
+      <span style="opacity:.6">| REMOTE LINK: ACTIVE</span>
+      <span class="spacer"></span>
+      <button class="topbar-btn" type="button" data-sound-toggle aria-label="Toggle sound">[SOUND: ON]</button>
+      <span id="desktop-clock">SYS.TIME 00:00:00</span>
+    </div>
+    <div id="desktop-head">
+      <h1>SELECT FILE</h1>
+      <p>6 CHAPTERS FOUND — CLICK A SCREEN TO PLAY IN COLOR</p>
+    </div>
+    <div id="chapter-grid" role="list"></div>
+    <div id="desktop-foot">THUMBNAILS: GREYSCALE + MUTED // PLAYBACK: COLOR + SOUND // [ESC] CLOSES VIEWER</div>
+  </section>
+
+  <div id="app-foot">BPM_OS v6.1.6</div>
+</div>
+
+<!-- ============ MODAL VIEWER ============ -->
+<div id="modal-overlay" role="dialog" aria-modal="true" aria-label="Video player">
+  <div id="modal-window">
+    <div id="modal-topbar">
+      <span id="modal-title">▸ WC26.VID</span>
+      <button id="modal-close" type="button" aria-label="Close video">[X]</button>
+    </div>
+    <div id="modal-video-wrap">
+      <div id="modal-bootmsg">OPENING FILE...</div>
+    </div>
+    <div id="modal-foot">
+      <span id="modal-note">PLAYING IN COLOR // PRESS [X] TO CLOSE</span>
+    </div>
+  </div>
+</div>
+<div id="flash-frame"></div>
+
+<script src="js/config.js"></script>
+<script src="js/sound.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
