@@ -4,11 +4,25 @@
 
   const $ = (sel) => document.querySelector(sel);
   const FALLBACK_DRIVE_ID = "1kWqoeuCto9GgYdZIpkwO6rv2lF5XMmCi";
-  const defaults = { countdownTarget: "", remoteUsername: "BULLETPROOF", remotePassword: "", intro: { title: "WC26.VID", driveFileId: FALLBACK_DRIVE_ID, mp4Url: "" }, chapters: [] };
+  const FALLBACK_CHAPTERS = [
+    { name: "INTRODUCTION", driveFileId: FALLBACK_DRIVE_ID, mp4Url: "" },
+    { name: "CRUELLA", driveFileId: FALLBACK_DRIVE_ID, mp4Url: "" },
+    { name: "MICAH", driveFileId: FALLBACK_DRIVE_ID, mp4Url: "" },
+    { name: "VAGABOND", driveFileId: FALLBACK_DRIVE_ID, mp4Url: "" },
+    { name: "HAYWOOD", driveFileId: FALLBACK_DRIVE_ID, mp4Url: "" },
+    { name: "CONCLUSION", driveFileId: FALLBACK_DRIVE_ID, mp4Url: "" }
+  ];
+  const defaults = { countdownTarget: "", remoteUsername: "BULLETPROOF", remotePassword: "", intro: { title: "WC26.VID", driveFileId: FALLBACK_DRIVE_ID, mp4Url: "" }, chapters: FALLBACK_CHAPTERS };
   const cfg = Object.assign({}, defaults, window.WCFIN_CONFIG || {});
   cfg.intro = Object.assign({}, defaults.intro, (window.WCFIN_CONFIG && window.WCFIN_CONFIG.intro) || {});
+  // Chapters: prefer config, but NEVER leave the grid empty — fall back
+  // to the 6 placeholder chapters so the desktop always shows 6 screens.
+  const cfgChapters = window.WCFIN_CONFIG && Array.isArray(window.WCFIN_CONFIG.chapters) ? window.WCFIN_CONFIG.chapters : [];
+  cfg.chapters = cfgChapters.length ? cfgChapters : FALLBACK_CHAPTERS.slice();
   if (!window.WCFIN_CONFIG) {
-    console.warn("[BPM_OS] js/config.js did not load — using fallback video ID. Serve over http(s), not file://, and keep js/ next to index.html.");
+    console.warn("[BPM_OS] js/config.js did not load — using 6 fallback placeholder chapters. Serve over http(s), not file://, and keep js/ next to index.html.");
+  } else if (!cfgChapters.length) {
+    console.warn("[BPM_OS] config.js has no chapters — using 6 fallback placeholders.");
   }
 
   // ---------- Drive URL helpers ----------
@@ -389,13 +403,15 @@
   let desktopBuilt = false;
 
   function buildDesktop() {
-    if (desktopBuilt) return;
-    desktopBuilt = true;
     if (!grid) return;
+    // Allow rebuild if a previous run left the grid empty (e.g. config
+    // failed on first pass). Normal path still builds exactly once.
+    if (desktopBuilt && grid.children.length) return;
+    desktopBuilt = true;
     grid.innerHTML = "";
-    const chapters = cfg.chapters || [];
-    chapters.slice(0, 6).forEach((ch, i) => {
-      const id = driveId(ch.driveFileId);
+    const chapters = (cfg.chapters && cfg.chapters.length ? cfg.chapters : FALLBACK_CHAPTERS).slice(0, 6);
+    chapters.forEach((ch, i) => {
+      const id = driveId(ch.driveFileId) || FALLBACK_DRIVE_ID;
       const num = String(i + 1).padStart(2, "0");
       const tile = document.createElement("button");
       tile.className = "tile";
@@ -405,13 +421,22 @@
       const screen = document.createElement("div");
       screen.className = "tile-screen";
 
-      // Muted greyscale looping thumbnail.
-      // Prefers direct .mp4 if provided; otherwise tries Drive
-      // direct-download URL (works for many Drive videos). If the
-      // <video> fails, we fall back to the Drive preview iframe
-      // (also greyscaled via CSS).
-      const thumbSrc = ch.mp4Url || (id ? directUrl(id) : "");
-      if (thumbSrc) {
+      // Muted greyscale thumbnail.
+      // Drive preview iframe is the reliable base layer (instant
+      // placeholder, same video for all 6 until real links arrive).
+      // If a real direct .mp4 is provided, layer a muted looping
+      // <video> on top; if it fails it hides itself, revealing the
+      // iframe underneath. Drive direct-download URLs are NOT used
+      // as video src (they return HTML confirm pages = black tiles).
+      const f = document.createElement("iframe");
+      f.src = previewUrl(id);
+      // Privacy-friendly + faster tiles: no autoplay param needed,
+      // preview starts paused (muted in spirit — no sound).
+      f.tabIndex = -1;
+      f.setAttribute("aria-hidden", "true");
+      f.setAttribute("loading", "lazy");
+      screen.appendChild(f);
+      if (ch.mp4Url) {
         const v = document.createElement("video");
         v.muted = true;
         v.loop = true;
@@ -419,37 +444,12 @@
         v.playsInline = true;
         v.preload = "metadata";
         v.setAttribute("muted", "");
-        v.src = thumbSrc;
+        v.src = ch.mp4Url;
         const tryPlay = () => { v.play && v.play().catch(() => {}); };
         v.addEventListener("canplay", tryPlay);
-        v.addEventListener("error", () => {
-          v.style.display = "none";
-          if (id && !screen.querySelector("iframe")) {
-            const f = document.createElement("iframe");
-            f.src = previewUrl(id);
-            f.tabIndex = -1;
-            f.setAttribute("aria-hidden", "true");
-            screen.insertBefore(f, screen.firstChild);
-          }
-        });
+        v.addEventListener("error", () => v.remove());
         screen.appendChild(v);
-        // If video hasn't loaded in 6s (Drive confirm page etc.),
-        // fall back to preview iframe behind it.
-        setTimeout(() => {
-          if (v.readyState < 2 && id && !screen.querySelector("iframe")) {
-            const f = document.createElement("iframe");
-            f.src = previewUrl(id);
-            f.tabIndex = -1;
-            f.setAttribute("aria-hidden", "true");
-            screen.insertBefore(f, screen.firstChild);
-          }
-        }, 6000);
-      } else if (id) {
-        const f = document.createElement("iframe");
-        f.src = previewUrl(id);
-        f.tabIndex = -1;
-        f.setAttribute("aria-hidden", "true");
-        screen.appendChild(f);
+        tryPlay();
       }
 
       const numEl = document.createElement("div");
