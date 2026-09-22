@@ -59,9 +59,42 @@
   const cdExpired = $("#countdown-expired");
   const btnEnter = $("#btn-enter");
 
+  // Countdown target is ALWAYS a single GMT/UTC instant. The owner
+  // writes GMT (e.g. Saturday 17:00 GMT); every visitor worldwide
+  // unlocks at that same instant (UK 17:00 Sat = PH 01:00 Sun).
+  // Accepted formats (all interpreted as GMT unless an explicit
+  // offset is given):
+  //   "2026-10-03T17:00:00Z"  (ISO UTC — preferred)
+  //   "2026-10-03 17:00"      (assumed GMT)
+  //   "2026-10-03"            (assumed GMT midnight)
   function targetTime() {
-    const t = Date.parse(cfg.countdownTarget);
+    const raw = String(cfg.countdownTarget || "").trim();
+    if (!raw) return NaN;
+    // Explicit timezone present (Z or ±hh:mm / ±hhmm) -> exact instant.
+    if (/[zZ]$/.test(raw) || /[+-]\d{2}:?\d{2}$/.test(raw)) {
+      const t = Date.parse(raw);
+      return isNaN(t) ? NaN : t;
+    }
+    // "YYYY-MM-DD HH:mm[:ss]" or with T separator -> GMT.
+    let m = raw.match(/^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})(?::(\d{2}))?$/);
+    if (m) {
+      return Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +(m[6] || 0));
+    }
+    // Date only -> GMT midnight.
+    m = raw.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (m) return Date.UTC(+m[1], +m[2] - 1, +m[3]);
+    const t = Date.parse(raw);
     return isNaN(t) ? NaN : t;
+  }
+  function fmtGMT(ms) {
+    try {
+      return new Date(ms).toUTCString().replace("GMT", "GMT");
+    } catch (e) { return ""; }
+  }
+  function fmtLocal(ms) {
+    try {
+      return new Date(ms).toLocaleString([], { weekday: "short", year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
+    } catch (e) { return ""; }
   }
   function pad(n) { return String(n).padStart(2, "0"); }
   function sfx(name, arg) {
@@ -74,7 +107,13 @@
   let lastCdSec = -1;
   function renderCountdown() {
     const t = targetTime();
-    if (cdDate) cdDate.textContent = "TARGET: " + (cfg.countdownTarget || "UNSET") + " // LOCAL TIME: " + new Date().toLocaleString();
+    // Show the single GMT instant + this visitor's local equivalent,
+    // e.g. "SAT 17:00 GMT = SUN 01:00 IN MANILA". Same moment, both zones.
+    if (cdDate) {
+      cdDate.textContent = isNaN(t)
+        ? "TARGET: UNSET // SET countdownTarget IN js/config.js (GMT)"
+        : "UNLOCKS " + fmtGMT(t) + " // YOUR TIME: " + fmtLocal(t);
+    }
     if (isNaN(t)) {
       // Invalid date -> allow entry immediately (owner hasn't set it yet)
       if (cdDisplay) cdDisplay.innerHTML = "00<span class='cd-sep'>:</span>00<span class='cd-sep'>:</span>00<span class='cd-sep'>:</span>00";
@@ -355,13 +394,9 @@
     }, 340);
   }
 
+  // X-only close: backdrop clicks and Escape intentionally do nothing.
+  // The viewer stays open until the [X] top-right button is pressed.
   if (mClose) mClose.addEventListener("click", () => { sfx("click"); closeModal(); });
-  if (overlay) overlay.addEventListener("click", (e) => {
-    if (e.target === overlay) closeModal();
-  });
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") closeModal();
-  });
 
   function openIntro() {
     const intro = cfg.intro || {};
@@ -398,16 +433,29 @@
 
       // Muted greyscale thumbnail, snug-fit (object-fit: cover).
       // R2 direct .mp4 only — fills the box edge to edge.
-      // On error, tile shows SIGNAL LOST (no Drive fallback).
+      // Previews loop the FIRST 3 SECONDS only; full video plays
+      // in the modal on click. On error, tile shows SIGNAL LOST.
+      const PREVIEW_SECS = 3;
       const v = document.createElement("video");
       v.muted = true;
-      v.loop = true;
+      v.loop = false;
       v.autoplay = true;
       v.playsInline = true;
       v.preload = "metadata";
       v.setAttribute("muted", "");
       v.src = src;
       const tryPlay = () => { v.play && v.play().catch(() => {}); };
+      v.addEventListener("loadedmetadata", () => {
+        try { v.currentTime = 0; } catch (e) {}
+      });
+      v.addEventListener("timeupdate", () => {
+        if (v.currentTime >= PREVIEW_SECS) {
+          try {
+            v.currentTime = 0;
+            v.play && v.play().catch(() => {});
+          } catch (e) {}
+        }
+      });
       v.addEventListener("canplay", tryPlay);
       v.addEventListener("error", () => {
         v.remove();
