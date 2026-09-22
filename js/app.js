@@ -332,12 +332,23 @@
       return;
     }
     const v = document.createElement("video");
-    v.controls = true;
+    v.controls = false;
     v.autoplay = true;
     v.playsInline = true;
     v.preload = "auto";
     v.src = src;
     v.style.filter = "none";
+    try {
+      v.setAttribute("controlsList", "nodownload nofullscreen noremoteplayback");
+      v.disablePictureInPicture = true;
+    } catch (e) {}
+    // No native controls by design — click the picture to pause/resume.
+    v.addEventListener("click", () => {
+      try {
+        if (v.paused) { const p = v.play(); if (p && p.catch) p.catch(() => {}); }
+        else v.pause();
+      } catch (e) {}
+    });
     v.addEventListener("playing", () => {
       if (mBoot) mBoot.classList.add("hidden");
     });
