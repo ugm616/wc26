@@ -1,8 +1,8 @@
-# BPM_OS // WC26
+# BPM_OS // BPM
 
 One-page cyberpunk OS terminal — black + red only, VT323 only.
 
-Flow: **Countdown → [ENTER] → Boot → Remote-login hijack → "REMOTE USER ACCESSING FILE WC26.VID" → intro video modal → 6-chapter desktop → chapter modals.**
+Flow: **Countdown → [ENTER] → Boot → Remote-login hijack → "REMOTE USER ACCESSING FILE BPM.VID" → intro video modal → 6-chapter desktop → chapter modals.**
 
 ## Run locally
 

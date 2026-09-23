@@ -33,7 +33,7 @@ const WCFIN_CONFIG = {
 
   // ---- INTRO / MAIN FILE (plays once before desktop) ----
   intro: {
-    title: "WC26.VID",
+    title: "BPM.VID",
     mp4Url: "https://pub-472b1ae435af4460ab024c0b2a8f1365.r2.dev/intro.mp4"
   },
 

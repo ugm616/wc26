@@ -13,7 +13,7 @@
     { name: "HAYWOOD", mp4Url: FALLBACK_MP4 },
     { name: "CONCLUSION", mp4Url: FALLBACK_MP4 }
   ];
-  const defaults = { countdownTarget: "", remoteUsername: "BULLETPROOF", remotePassword: "", intro: { title: "WC26.VID", mp4Url: FALLBACK_MP4 }, chapters: FALLBACK_CHAPTERS };
+  const defaults = { countdownTarget: "", remoteUsername: "BULLETPROOF", remotePassword: "", intro: { title: "BPM.VID", mp4Url: FALLBACK_MP4 }, chapters: FALLBACK_CHAPTERS };
   const cfg = Object.assign({}, defaults, window.WCFIN_CONFIG || {});
   cfg.intro = Object.assign({}, defaults.intro, (window.WCFIN_CONFIG && window.WCFIN_CONFIG.intro) || {});
   // Chapters: prefer config, but NEVER leave the grid empty — fall back
@@ -178,7 +178,7 @@
     "MEMORY CHECK ............ 640K OK",
     "RED BUS ................. ONLINE",
     "CRT LINK ................ SYNCED",
-    "MOUNTING /dev/wc26 ...... OK",
+    "MOUNTING /dev/bpm ...... OK",
     "LOADING BPM_OS ........",
   ];
 
@@ -386,7 +386,7 @@
     // Close is manual only via [X] top-right — no auto-end.
     clearMedia();
     isIntroOpen = !!opts.intro;
-    if (mTitle) mTitle.textContent = "▸ " + (opts.title || "WC26.VID");
+    if (mTitle) mTitle.textContent = "▸ " + (opts.title || "BPM.VID");
     showLoader("OPENING " + (opts.title || "FILE") + "...");
     if (mNote) mNote.textContent = "PLAYING IN COLOR // PRESS [X] TO CLOSE";
     overlay.classList.add("open");
@@ -431,7 +431,7 @@
   function openIntro() {
     const intro = cfg.intro || {};
     openModal({
-      title: intro.title || "WC26.VID",
+      title: intro.title || "BPM.VID",
       mp4Url: intro.mp4Url || FALLBACK_MP4,
       intro: true,
     });
