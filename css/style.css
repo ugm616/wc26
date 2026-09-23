@@ -1,32 +1,25 @@
 /* ============================================================
-   WCFIN_OS — black + red only. Font: VT323 (self-hosted).
+   BPM_OS — black + red only. Font: Geo (self-hosted).
+   VT323 files kept in fonts/VT323/ as backup (unused).
    No other colors. No other fonts.
    ============================================================ */
 
-/* ---- Self-hosted VT323 ---- */
+/* ---- Self-hosted Geo (active) ---- */
 @font-face {
-  font-family: 'VT323';
+  font-family: 'Geo';
   font-style: normal;
   font-weight: 400;
   font-display: swap;
-  src: url('../fonts/VT323/VT323-latin.woff2') format('woff2');
+  src: url('../fonts/Geo/Geo-latin.woff2') format('woff2');
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 @font-face {
-  font-family: 'VT323';
-  font-style: normal;
+  font-family: 'Geo';
+  font-style: italic;
   font-weight: 400;
   font-display: swap;
-  src: url('../fonts/VT323/VT323-latin-ext.woff2') format('woff2');
-  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+1E00-1E9F, U+2113, U+2C60-2C7F;
-}
-@font-face {
-  font-family: 'VT323';
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src: url('../fonts/VT323/VT323-vietnamese.woff2') format('woff2');
-  unicode-range: U+0102-0103, U+0110-0111, U+01A0-01A1, U+01AF-01B0, U+1EA0-1EF9, U+20AB;
+  src: url('../fonts/Geo/Geo-italic.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 
 :root {
@@ -46,7 +39,7 @@ html, body {
   padding: 0;
   background: var(--black);
   color: var(--red);
-  font-family: 'VT323', monospace;
+  font-family: 'Geo', monospace;
   min-height: 100%;
   -webkit-text-size-adjust: 100%;
 }
