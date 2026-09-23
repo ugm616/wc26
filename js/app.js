@@ -446,7 +446,7 @@
   // while a tiny canvas repaints the current frame at low resolution
   // and CSS upscales it chunky (image-rendering: pixelated).
   // Modal playback is untouched — full-res color <video>, no canvas.
-  const PX_W = 64, PX_H = 36, PX_EVERY_MS = 120;
+  const PX_W = 128, PX_H = 72, PX_EVERY_MS = 120;
   const pixelPainters = [];
   let pixelLoopOn = false;
   function pumpPixels(now) {
