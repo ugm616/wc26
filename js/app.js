@@ -442,6 +442,36 @@
   const clockEl = $("#desktop-clock");
   let desktopBuilt = false;
 
+  // Pixelated thumbnails: each tile plays its (muted) video element
+  // while a tiny canvas repaints the current frame at low resolution
+  // and CSS upscales it chunky (image-rendering: pixelated).
+  // Modal playback is untouched — full-res color <video>, no canvas.
+  const PX_W = 64, PX_H = 36, PX_EVERY_MS = 120;
+  const pixelPainters = [];
+  let pixelLoopOn = false;
+  function pumpPixels(now) {
+    if (!pixelLoopOn) return;
+    pumpPixels.last = pumpPixels.last || 0;
+    if (now - pumpPixels.last >= PX_EVERY_MS) {
+      pumpPixels.last = now;
+      for (const p of pixelPainters) {
+        try {
+          if (p.v.readyState >= 2 && p.v.videoWidth > 0) {
+            p.ctx.drawImage(p.v, 0, 0, PX_W, PX_H);
+          }
+        } catch (e) { /* tainted/empty frame — skip */ }
+      }
+    }
+    requestAnimationFrame(pumpPixels);
+  }
+  function trackPixels(v, ctx) {
+    pixelPainters.push({ v, ctx });
+    if (!pixelLoopOn) {
+      pixelLoopOn = true;
+      requestAnimationFrame(pumpPixels);
+    }
+  }
+
   function buildDesktop() {
     if (!grid) return;
     // Allow rebuild if a previous run left the grid empty (e.g. config
@@ -461,10 +491,12 @@
       const screen = document.createElement("div");
       screen.className = "tile-screen";
 
-      // Muted greyscale thumbnail, snug-fit (object-fit: cover).
-      // R2 direct .mp4 only — fills the box edge to edge.
-      // Previews loop the FIRST 3 SECONDS only; full video plays
-      // in the modal on click. On error, tile shows SIGNAL LOST.
+      // Muted greyscale PIXELATED thumbnail, snug-fit.
+      // R2 direct .mp4 only. The <video> plays (muted) while a 64x36
+      // canvas repaints its frames chunky on top. Full-res color
+      // video plays only in the modal on click.
+      // Previews loop the FIRST 3 SECONDS only.
+      // On error, tile shows SIGNAL LOST.
       const PREVIEW_SECS = 3;
       const loader = document.createElement("div");
       loader.className = "tile-loading";
@@ -478,6 +510,14 @@
       v.preload = "metadata";
       v.setAttribute("muted", "");
       v.src = src;
+      screen.appendChild(v);
+      const px = document.createElement("canvas");
+      px.width = PX_W;
+      px.height = PX_H;
+      px.className = "tile-pixels";
+      px.setAttribute("aria-hidden", "true");
+      screen.appendChild(px);
+      trackPixels(v, px.getContext("2d", { alpha: false }));
       const tryPlay = () => { v.play && v.play().catch(() => {}); };
       const markReady = () => {
         v.classList.add("ready");
@@ -497,13 +537,13 @@
       v.addEventListener("canplay", () => { markReady(); tryPlay(); });
       v.addEventListener("error", () => {
         v.remove();
+        px.remove();
         loader.remove();
         const lost = document.createElement("div");
         lost.className = "tile-lost";
         lost.textContent = "SIGNAL LOST";
         screen.insertBefore(lost, screen.firstChild);
       });
-      screen.appendChild(v);
       tryPlay();
 
       const numEl = document.createElement("div");
