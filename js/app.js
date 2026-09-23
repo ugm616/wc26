@@ -381,10 +381,27 @@
     }, 3000);
   }
 
+  // Chapter modals were starved by the 6 looping thumbnails: browsers
+  // allow ~6 concurrent connections per host, so the grid saturated the
+  // pipe and the modal buffered. Park the thumbnails while any modal
+  // plays, resume them on close. (Intro never had this problem — the
+  // grid doesn't exist yet when it plays.)
+  function parkThumbs() {
+    document.querySelectorAll(".tile-screen video").forEach((v) => {
+      try { v.pause(); } catch (e) {}
+    });
+  }
+  function resumeThumbs() {
+    document.querySelectorAll(".tile-screen video").forEach((v) => {
+      try { const p = v.play(); if (p && p.catch) p.catch(() => {}); } catch (e) {}
+    });
+  }
+
   function openModal(opts) {
     // opts: { title, mp4Url, intro }
     // Close is manual only via [X] top-right — no auto-end.
     clearMedia();
+    parkThumbs();
     isIntroOpen = !!opts.intro;
     if (mTitle) mTitle.textContent = "▸ " + (opts.title || "BPM.VID");
     showLoader("OPENING " + (opts.title || "FILE") + "...");
@@ -414,6 +431,7 @@
       overlay.classList.remove("open");
       mWindow.classList.remove("closing");
       clearMedia();
+      resumeThumbs();
       if (isIntroOpen && !introDone) {
         introDone = true;
         isIntroOpen = false;
@@ -621,7 +639,7 @@
         path: "anim/sphere-red.json",
         rendererSettings: { preserveAspectRatio: "xMidYMid meet", progressiveLoad: true }
       });
-      anim.setSpeed(0.6);
+      anim.setSpeed(0.3);
       document.addEventListener("visibilitychange", () => {
         try {
           if (document.hidden) anim.pause();
