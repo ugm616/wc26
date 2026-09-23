@@ -1,6 +1,6 @@
 # BPM_OS // BPM
 
-One-page cyberpunk OS terminal — black + red only, Geo only (VT323 kept as backup).
+One-page cyberpunk OS terminal — black + red only. Saira Extra Condensed everywhere except the countdown (Zen Dots). Geo + VT323 kept as backups.
 
 Flow: **Countdown → [ENTER] → Boot → Remote-login hijack → "REMOTE USER ACCESSING FILE BPM.VID" → intro video modal → 6-chapter desktop → chapter modals.**
 
@@ -37,7 +37,7 @@ Chapter order (top-left → bottom-right): INTRODUCTION, CRUELLA, MICAH, VAGABON
 2. Repo **Settings → Pages → Deploy from branch**, branch `main`, folder `/ (root)` (or `/wcfin` if subfolder).
 3. Live at `https://<user>.github.io/<repo>/`.
 
-No build step. Fonts are self-hosted in `fonts/Geo/` (active) and `fonts/VT323/` (backup). No trackers, no backend.
+No build step. Fonts are self-hosted in `fonts/SairaExtraCondensed/` (active), `fonts/ZenDots/` (countdown), `fonts/Geo/` + `fonts/VT323/` (backups). Looping backdrop is a recolored Lottie (`anim/sphere-red.json`, all shapes mapped to dark reds) played by self-hosted `js/lottie.min.js`. No trackers, no backend.
 
 ## Video notes (R2 only — no Drive)
 

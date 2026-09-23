@@ -606,6 +606,31 @@
     });
   }, { passive: true });
 
+  // ---------- 6b. LOOPING LOTTIE BACKDROP (dark-red sphere) ----------
+  (function initBackdrop() {
+    try {
+      if (!window.lottie) return;
+      const box = $("#lottie-anim");
+      if (!box) return;
+      if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+      const anim = window.lottie.loadAnimation({
+        container: box,
+        renderer: "svg",
+        loop: true,
+        autoplay: true,
+        path: "anim/sphere-red.json",
+        rendererSettings: { preserveAspectRatio: "xMidYMid meet", progressiveLoad: true }
+      });
+      anim.setSpeed(0.6);
+      document.addEventListener("visibilitychange", () => {
+        try {
+          if (document.hidden) anim.pause();
+          else anim.play();
+        } catch (e) {}
+      });
+    } catch (e) { /* backdrop is decorative — never block the OS */ }
+  })();
+
   // ---------- 7. SOUND TOGGLE ----------
   function paintSoundButtons() {
     const on = !(window.BPM_SFX && window.BPM_SFX.enabled === false);
