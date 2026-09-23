@@ -305,8 +305,19 @@
   const mTitle = $("#modal-title");
   const mWrap = $("#modal-video-wrap");
   const mBoot = $("#modal-bootmsg");
+  const mBootText = $("#modal-bootmsg-text");
   const mClose = $("#modal-close");
   const mNote = $("#modal-note");
+
+  // Branded red loader overlay (covers the browser's native spinner,
+  // which cannot be recolored). Stays up until first frame plays.
+  function showLoader(msg) {
+    if (mBootText) mBootText.textContent = msg;
+    if (mBoot) mBoot.classList.remove("hidden");
+  }
+  function hideLoader() {
+    if (mBoot) mBoot.classList.add("hidden");
+  }
 
   let isIntroOpen = false;
   let introDone = false;
@@ -325,10 +336,10 @@
   // R2 direct .mp4 only — true autoplay with sound (modal opens from a
   // click, so transient activation allows play() with audio).
   // No auto-close: visitor closes manually via [X] (top-right).
-  function buildMedia(mp4Url) {
+  function buildMedia(mp4Url, title) {
     const src = mp4Url || FALLBACK_MP4;
     if (!src) {
-      if (mBoot) { mBoot.classList.remove("hidden"); mBoot.textContent = "SIGNAL MISSING — CHECK config.js mp4Url // [X] TO CLOSE"; }
+      showLoader("SIGNAL MISSING — CHECK config.js mp4Url // [X] TO CLOSE");
       return;
     }
     const v = document.createElement("video");
@@ -349,17 +360,25 @@
         else v.pause();
       } catch (e) {}
     });
-    v.addEventListener("playing", () => {
-      if (mBoot) mBoot.classList.add("hidden");
-    });
+    v.addEventListener("playing", hideLoader);
+    // Mid-stream rebuffering: cover the native spinner with our bar.
+    v.addEventListener("waiting", () => showLoader("BUFFERING " + (title || "FILE") + "..."));
     v.addEventListener("error", () => {
-      if (mBoot) { mBoot.classList.remove("hidden"); mBoot.textContent = "SIGNAL LOST — CHECK R2 LINK // [X] TO CLOSE"; }
+      showLoader("SIGNAL LOST — CHECK R2 LINK // [X] TO CLOSE");
     });
     mWrap.appendChild(v);
     addScan();
     const kick = () => { try { const p = v.play(); if (p && p.catch) p.catch(() => {}); } catch (e) {} };
     v.addEventListener("canplay", kick);
     kick();
+    // Autoplay blocked (rare — modal opens from a click): reveal the
+    // picture so the visitor can start it with one tap.
+    setTimeout(() => {
+      if (overlay.classList.contains("open") && mWrap.contains(v) && v.paused && v.readyState >= 2) {
+        hideLoader();
+        if (mNote) mNote.textContent = "PAUSED // CLICK PICTURE TO PLAY // [X] TO CLOSE";
+      }
+    }, 3000);
   }
 
   function openModal(opts) {
@@ -368,20 +387,20 @@
     clearMedia();
     isIntroOpen = !!opts.intro;
     if (mTitle) mTitle.textContent = "▸ " + (opts.title || "WC26.VID");
-    if (mBoot) { mBoot.classList.remove("hidden"); mBoot.textContent = "OPENING " + (opts.title || "FILE") + "..."; }
+    showLoader("OPENING " + (opts.title || "FILE") + "...");
     if (mNote) mNote.textContent = "PLAYING IN COLOR // PRESS [X] TO CLOSE";
     overlay.classList.add("open");
     mWindow.classList.remove("closing");
     mWindow.classList.add("opening");
     sfx("open");
     flashFrame();
-    // CRT pop, then load media (feels like a file opening)
+    // CRT pop, then load media (feels like a file opening).
+    // Loader stays up until the first frame actually plays.
     setTimeout(() => {
       mWindow.classList.remove("opening");
       mWindow.classList.add("glitch-hit");
       setTimeout(() => mWindow.classList.remove("glitch-hit"), 450);
-      if (mBoot) mBoot.classList.add("hidden");
-      buildMedia(opts.mp4Url);
+      buildMedia(opts.mp4Url, opts.title || "FILE");
     }, 480);
   }
 
@@ -447,6 +466,10 @@
       // Previews loop the FIRST 3 SECONDS only; full video plays
       // in the modal on click. On error, tile shows SIGNAL LOST.
       const PREVIEW_SECS = 3;
+      const loader = document.createElement("div");
+      loader.className = "tile-loading";
+      loader.textContent = "LOADING";
+      screen.appendChild(loader);
       const v = document.createElement("video");
       v.muted = true;
       v.loop = false;
@@ -456,6 +479,10 @@
       v.setAttribute("muted", "");
       v.src = src;
       const tryPlay = () => { v.play && v.play().catch(() => {}); };
+      const markReady = () => {
+        v.classList.add("ready");
+        loader.remove();
+      };
       v.addEventListener("loadedmetadata", () => {
         try { v.currentTime = 0; } catch (e) {}
       });
@@ -467,9 +494,10 @@
           } catch (e) {}
         }
       });
-      v.addEventListener("canplay", tryPlay);
+      v.addEventListener("canplay", () => { markReady(); tryPlay(); });
       v.addEventListener("error", () => {
         v.remove();
+        loader.remove();
         const lost = document.createElement("div");
         lost.className = "tile-lost";
         lost.textContent = "SIGNAL LOST";
