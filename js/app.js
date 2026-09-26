@@ -14,7 +14,7 @@
     { name: "HAYWOOD", mp4Url: R2BASE + "/backup/005.mp4", thumbUrl: "images/005.png" },
     { name: "CONCLUSION", mp4Url: R2BASE + "/backup/006.mp4", thumbUrl: "images/006.png" }
   ];
-  const defaults = { countdownTarget: "", remoteUsername: "BULLETPROOF", remotePassword: "", intro: { title: "BPM.VID", mp4Url: FALLBACK_MP4 }, chapters: FALLBACK_CHAPTERS };
+  const defaults = { countdownTarget: "2026-09-27T19:00:00Z", remoteUsername: "BULLETPROOF", remotePassword: "", intro: { title: "BPM.VID", mp4Url: FALLBACK_MP4 }, chapters: FALLBACK_CHAPTERS };
   const cfg = Object.assign({}, defaults, window.WCFIN_CONFIG || {});
   cfg.intro = Object.assign({}, defaults.intro, (window.WCFIN_CONFIG && window.WCFIN_CONFIG.intro) || {});
   // Chapters: prefer config, but NEVER leave the grid empty — fall back
