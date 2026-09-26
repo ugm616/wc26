@@ -7,7 +7,7 @@
 <meta name="description" content="BPM_OS — secure video terminal. 6 chapters. Black and red only.">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='black'/%3E%3Crect x='4' y='4' width='24' height='24' fill='none' stroke='red' stroke-width='2'/%3E%3Crect x='13' y='10' width='6' height='12' fill='red'/%3E%3C/svg%3E">
 <link rel="preload" href="fonts/SairaExtraCondensed/SairaExtraCondensed-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="preload" href="fonts/ZenDots/ZenDots-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/Rationale/Rationale-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body class="crt">
@@ -23,7 +23,6 @@
       <div id="countdown-live">
         <div class="sys-label">TIME TO DECRYPT</div>
         <div id="countdown-display" aria-live="polite">--:--:--:--</div>
-        <div id="countdown-date">TARGET: ...</div>
         <div class="hint">SIGNAL LOCKED — WAIT FOR <b>ZERO</b></div>
       </div>
       <div id="countdown-expired">
@@ -33,7 +32,6 @@
         <div class="hint">PRESS <b>ENTER</b> TO JACK IN</div>
       </div>
     </div>
-    <div class="hint"><button class="link-btn" type="button" data-sound-toggle>[SOUND: ON]</button></div>
   </section>
 
   <!-- ============ 2. BOOT ============ -->
@@ -112,7 +110,8 @@
 </div>
 <div id="flash-frame"></div>
 
-<script src="js/config.js"></script>
+<!-- Bump ?v= after editing config.js so visitors get the fresh countdown, not a cached one -->
+<script src="js/config.js?v=20260927"></script>
 <script src="js/lottie.min.js"></script>
 <script src="js/sound.js"></script>
 <script src="js/app.js"></script>
