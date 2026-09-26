@@ -36,7 +36,7 @@ const R2 = "https://pub-472b1ae435af4460ab024c0b2a8f1365.r2.dev";
 
 const WCFIN_CONFIG = {
   // ---- LAUNCH COUNTDOWN (EDIT THIS) ----
-  countdownTarget: "2026-12-31T23:59:59Z",
+  countdownTarget: "2026-09-27T19:00:00Z",
 
   // Shown during the fake remote-login typing performance
   remoteUsername: "BULLETPROOF",
