@@ -154,6 +154,20 @@
     startBoot();
   });
 
+  // Test fuse (not advertised in UI): ?cd=120 counts down from 120s
+  // from page load — proves the zero flip without touching config.
+  let overrideTarget = NaN;
+  {
+    const cdSecs = parseInt(params.get("cd") || "", 10);
+    if (Number.isFinite(cdSecs) && cdSecs > 0 && cdSecs < 86400 * 30) {
+      overrideTarget = Date.now() + cdSecs * 1000;
+    }
+  }
+  const _targetTime = targetTime;
+  targetTime = function () {
+    return Number.isFinite(overrideTarget) ? overrideTarget : _targetTime();
+  };
+
   // Dev shortcuts (not advertised in UI): ?enter / ?boot / ?desktop
   if (params.has("desktop")) {
     clearInterval(cdTimer);
