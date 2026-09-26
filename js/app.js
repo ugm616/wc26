@@ -4,14 +4,15 @@
 
   const $ = (sel) => document.querySelector(sel);
   // R2 only — no Google Drive anywhere in this build.
-  const FALLBACK_MP4 = "https://pub-472b1ae435af4460ab024c0b2a8f1365.r2.dev/intro.mp4";
+  const R2BASE = "https://pub-472b1ae435af4460ab024c0b2a8f1365.r2.dev";
+  const FALLBACK_MP4 = R2BASE + "/000.mp4";
   const FALLBACK_CHAPTERS = [
-    { name: "INTRODUCTION", mp4Url: FALLBACK_MP4 },
-    { name: "CRUELLA", mp4Url: FALLBACK_MP4 },
-    { name: "MICAH", mp4Url: FALLBACK_MP4 },
-    { name: "VAGABOND", mp4Url: FALLBACK_MP4 },
-    { name: "HAYWOOD", mp4Url: FALLBACK_MP4 },
-    { name: "CONCLUSION", mp4Url: FALLBACK_MP4 }
+    { name: "INTRODUCTION", mp4Url: R2BASE + "/001.mp4", thumbUrl: "images/001.png" },
+    { name: "CRUELLA", mp4Url: R2BASE + "/002.mp4", thumbUrl: "images/002.png" },
+    { name: "MICAH", mp4Url: R2BASE + "/003.mp4", thumbUrl: "images/003.png" },
+    { name: "VAGABOND", mp4Url: R2BASE + "/004.mp4", thumbUrl: "images/004.png" },
+    { name: "HAYWOOD", mp4Url: R2BASE + "/005.mp4", thumbUrl: "images/005.png" },
+    { name: "CONCLUSION", mp4Url: R2BASE + "/006.mp4", thumbUrl: "images/006.png" }
   ];
   const defaults = { countdownTarget: "", remoteUsername: "BULLETPROOF", remotePassword: "", intro: { title: "BPM.VID", mp4Url: FALLBACK_MP4 }, chapters: FALLBACK_CHAPTERS };
   const cfg = Object.assign({}, defaults, window.WCFIN_CONFIG || {});
@@ -509,60 +510,76 @@
       const screen = document.createElement("div");
       screen.className = "tile-screen";
 
-      // Muted greyscale PIXELATED thumbnail, snug-fit.
-      // R2 direct .mp4 only. The <video> plays (muted) while a 64x36
-      // canvas repaints its frames chunky on top. Full-res color
-      // video plays only in the modal on click.
-      // Previews loop the FIRST 3 SECONDS only.
-      // On error, tile shows SIGNAL LOST.
+      // Pixelated still-image thumbnail (near-zero bandwidth).
+      // The PNG is drawn ONCE to a tiny canvas, upscaled chunky.
+      // Full-res color video plays only in the modal on click.
+      // If the PNG is missing, falls back to a muted 3-second video
+      // preview so the grid never looks broken.
       const PREVIEW_SECS = 3;
+      const thumb = ch.thumbUrl || "";
       const loader = document.createElement("div");
       loader.className = "tile-loading";
       loader.textContent = "LOADING";
       screen.appendChild(loader);
-      const v = document.createElement("video");
-      v.muted = true;
-      v.loop = false;
-      v.autoplay = true;
-      v.playsInline = true;
-      v.preload = "metadata";
-      v.setAttribute("muted", "");
-      v.src = src;
-      screen.appendChild(v);
       const px = document.createElement("canvas");
       px.width = PX_W;
       px.height = PX_H;
       px.className = "tile-pixels";
       px.setAttribute("aria-hidden", "true");
       screen.appendChild(px);
-      trackPixels(v, px.getContext("2d", { alpha: false }));
-      const tryPlay = () => { v.play && v.play().catch(() => {}); };
-      const markReady = () => {
-        v.classList.add("ready");
-        loader.remove();
-      };
-      v.addEventListener("loadedmetadata", () => {
-        try { v.currentTime = 0; } catch (e) {}
-      });
-      v.addEventListener("timeupdate", () => {
-        if (v.currentTime >= PREVIEW_SECS) {
-          try {
-            v.currentTime = 0;
-            v.play && v.play().catch(() => {});
-          } catch (e) {}
-        }
-      });
-      v.addEventListener("canplay", () => { markReady(); tryPlay(); });
-      v.addEventListener("error", () => {
-        v.remove();
+      const pctx = px.getContext("2d", { alpha: false });
+      const markReady = () => loader.remove();
+      function signalLost() {
         px.remove();
         loader.remove();
         const lost = document.createElement("div");
         lost.className = "tile-lost";
         lost.textContent = "SIGNAL LOST";
         screen.insertBefore(lost, screen.firstChild);
-      });
-      tryPlay();
+      }
+      function videoFallback() {
+        const v = document.createElement("video");
+        v.muted = true;
+        v.loop = false;
+        v.autoplay = true;
+        v.playsInline = true;
+        v.preload = "metadata";
+        v.setAttribute("muted", "");
+        v.src = src;
+        screen.insertBefore(v, px);
+        trackPixels(v, pctx);
+        const tryPlay = () => { v.play && v.play().catch(() => {}); };
+        v.addEventListener("loadedmetadata", () => {
+          try { v.currentTime = 0; } catch (e) {}
+        });
+        v.addEventListener("timeupdate", () => {
+          if (v.currentTime >= PREVIEW_SECS) {
+            try {
+              v.currentTime = 0;
+              v.play && v.play().catch(() => {});
+            } catch (e) {}
+          }
+        });
+        v.addEventListener("canplay", () => { markReady(); tryPlay(); });
+        v.addEventListener("error", signalLost);
+        tryPlay();
+      }
+      if (thumb) {
+        const img = new Image();
+        img.onload = () => {
+          try {
+            // Cover-fit the still into the 128x72 pixel grid.
+            const s = Math.max(PX_W / img.width, PX_H / img.height);
+            const dw = img.width * s, dh = img.height * s;
+            pctx.drawImage(img, (PX_W - dw) / 2, (PX_H - dh) / 2, dw, dh);
+          } catch (e) {}
+          markReady();
+        };
+        img.onerror = videoFallback;
+        img.src = thumb;
+      } else {
+        videoFallback();
+      }
 
       const numEl = document.createElement("div");
       numEl.className = "tile-num";
@@ -616,6 +633,20 @@
     tick();
     setInterval(tick, 1000);
   }
+
+  // PLAY FULL FILM — replays the full film modal from the chapters page.
+  // intro:false so closing it returns straight to the grid (no rebuild).
+  const btnFull = $("#btn-fullfilm");
+  if (btnFull) btnFull.addEventListener("click", () => {
+    sfx("unlock");
+    sfx("click");
+    const intro = cfg.intro || {};
+    openModal({
+      title: intro.title || "BPM.VID",
+      mp4Url: intro.mp4Url || FALLBACK_MP4,
+      intro: false,
+    });
+  });
 
   // iOS/Safari: resume muted thumbnail playback on first touch
   document.addEventListener("touchstart", function resume() {

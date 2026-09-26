@@ -13,15 +13,22 @@
       equivalent, and the countdown math is pure epoch milliseconds
       so timezones cannot drift it.
 
-   2. VIDEOS: direct .mp4 links (Cloudflare R2). Paste the full
-      .mp4 URL into mp4Url for the intro + each chapter.
-      No Google Drive — R2 only.
+   2. VIDEOS: direct .mp4 links (Cloudflare R2).
+      intro.mp4Url = full film. chapters[].mp4Url = one per chapter.
 
-   3. CLOSING VIDEOS:
+   3. THUMBNAILS: still images (Cloudflare R2), e.g. 001.png.
+      chapters[].thumbUrl = one PNG per chapter. Images are drawn
+      once to a tiny pixelated canvas — near-zero bandwidth.
+      If a PNG is missing, the tile falls back to a muted video
+      preview so the grid never looks broken.
+
+   4. CLOSING VIDEOS:
       All video popups close manually via the [X] button in the
       top-right of the modal — intro and chapters alike.
       No auto-close on video end.
    ============================================================ */
+
+const R2 = "https://pub-472b1ae435af4460ab024c0b2a8f1365.r2.dev";
 
 const WCFIN_CONFIG = {
   // ---- LAUNCH COUNTDOWN (EDIT THIS) ----
@@ -31,20 +38,20 @@ const WCFIN_CONFIG = {
   remoteUsername: "BULLETPROOF",
   remotePassword: "hunter26",
 
-  // ---- INTRO / MAIN FILE (plays once before desktop) ----
+  // ---- FULL FILM (plays once before desktop + via PLAY FULL FILM) ----
   intro: {
     title: "BPM.VID",
-    mp4Url: "https://pub-472b1ae435af4460ab024c0b2a8f1365.r2.dev/intro.mp4"
+    mp4Url: R2 + "/000.mp4"
   },
 
   // ---- 6 CHAPTERS (top-left -> bottom-right) ----
-  // Same R2 file for all 6 until per-chapter links arrive.
+  // Films on R2 (001.mp4…), thumbnails in the repo's images/ folder.
   chapters: [
-    { name: "INTRODUCTION", mp4Url: "https://pub-472b1ae435af4460ab024c0b2a8f1365.r2.dev/intro.mp4" },
-    { name: "CRUELLA",      mp4Url: "https://pub-472b1ae435af4460ab024c0b2a8f1365.r2.dev/intro.mp4" },
-    { name: "MICAH",        mp4Url: "https://pub-472b1ae435af4460ab024c0b2a8f1365.r2.dev/intro.mp4" },
-    { name: "VAGABOND",     mp4Url: "https://pub-472b1ae435af4460ab024c0b2a8f1365.r2.dev/intro.mp4" },
-    { name: "HAYWOOD",      mp4Url: "https://pub-472b1ae435af4460ab024c0b2a8f1365.r2.dev/intro.mp4" },
-    { name: "CONCLUSION",   mp4Url: "https://pub-472b1ae435af4460ab024c0b2a8f1365.r2.dev/intro.mp4" }
+    { name: "INTRODUCTION", mp4Url: R2 + "/001.mp4", thumbUrl: "images/001.png" },
+    { name: "CRUELLA",      mp4Url: R2 + "/002.mp4", thumbUrl: "images/002.png" },
+    { name: "MICAH",        mp4Url: R2 + "/003.mp4", thumbUrl: "images/003.png" },
+    { name: "VAGABOND",     mp4Url: R2 + "/004.mp4", thumbUrl: "images/004.png" },
+    { name: "HAYWOOD",      mp4Url: R2 + "/005.mp4", thumbUrl: "images/005.png" },
+    { name: "CONCLUSION",   mp4Url: R2 + "/006.mp4", thumbUrl: "images/006.png" }
   ]
 };

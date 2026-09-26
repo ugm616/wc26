@@ -376,7 +376,13 @@ body {
 #screen-desktop { justify-content: flex-start; padding: 0 0 28px; }
 /* Center the chapter block as the focal point (topbar stays pinned top). */
 #screen-desktop #desktop-head { margin-top: auto; }
-#screen-desktop #chapter-grid { margin-bottom: auto; }
+#screen-desktop #chapter-grid { margin-bottom: 8px; }
+#fullfilm-wrap {
+  margin-bottom: auto;
+  padding: 10px 16px 8px;
+  display: flex;
+  justify-content: center;
+}
 #desktop-topbar {
   width: 100%;
   border-bottom: 2px solid var(--red);

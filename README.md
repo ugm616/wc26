@@ -41,8 +41,8 @@ No build step. Fonts are self-hosted in `fonts/SairaExtraCondensed/` (active), `
 
 ## Video notes (R2 only — no Drive)
 
-- Upload each chapter to Cloudflare R2 as `.mp4` (H.264 + AAC) and paste the public URL into `mp4Url`.
-- Thumbnails: muted + greyscale via CSS (`filter: grayscale(1)`), snug-fit via `object-fit: cover`.
+- Upload the full film + each chapter to Cloudflare R2 as `.mp4` (H.264 + AAC) and paste the public URLs into `mp4Url`.
+- Thumbnails: one `.png` per chapter in the repo's `images/` folder (`001.png`…`006.png` — see `images/README.txt`), drawn once to a tiny pixelated canvas — near-zero bandwidth. Missing PNGs fall back to muted video previews.
 - Modal playback is in full color with sound (user gesture = click, so autoplay with sound works).
 - All popups (intro + chapters) close manually via the [X] button top-right. No auto-close.
 
