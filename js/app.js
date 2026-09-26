@@ -5,14 +5,14 @@
   const $ = (sel) => document.querySelector(sel);
   // R2 only — no Google Drive anywhere in this build.
   const R2BASE = "https://pub-472b1ae435af4460ab024c0b2a8f1365.r2.dev";
-  const FALLBACK_MP4 = R2BASE + "/000.mp4";
+  const FALLBACK_MP4 = R2BASE + "/backup/000.mp4";
   const FALLBACK_CHAPTERS = [
-    { name: "INTRODUCTION", mp4Url: R2BASE + "/001.mp4", thumbUrl: "images/001.png" },
-    { name: "CRUELLA", mp4Url: R2BASE + "/002.mp4", thumbUrl: "images/002.png" },
-    { name: "MICAH", mp4Url: R2BASE + "/003.mp4", thumbUrl: "images/003.png" },
-    { name: "VAGABOND", mp4Url: R2BASE + "/004.mp4", thumbUrl: "images/004.png" },
-    { name: "HAYWOOD", mp4Url: R2BASE + "/005.mp4", thumbUrl: "images/005.png" },
-    { name: "CONCLUSION", mp4Url: R2BASE + "/006.mp4", thumbUrl: "images/006.png" }
+    { name: "INTRODUCTION", mp4Url: R2BASE + "/backup/001.mp4", thumbUrl: "images/001.png" },
+    { name: "CRUELLA", mp4Url: R2BASE + "/backup/002.mp4", thumbUrl: "images/002.png" },
+    { name: "MICAH", mp4Url: R2BASE + "/backup/003.mp4", thumbUrl: "images/003.png" },
+    { name: "VAGABOND", mp4Url: R2BASE + "/backup/004.mp4", thumbUrl: "images/004.png" },
+    { name: "HAYWOOD", mp4Url: R2BASE + "/backup/005.mp4", thumbUrl: "images/005.png" },
+    { name: "CONCLUSION", mp4Url: R2BASE + "/backup/006.mp4", thumbUrl: "images/006.png" }
   ];
   const defaults = { countdownTarget: "", remoteUsername: "BULLETPROOF", remotePassword: "", intro: { title: "BPM.VID", mp4Url: FALLBACK_MP4 }, chapters: FALLBACK_CHAPTERS };
   const cfg = Object.assign({}, defaults, window.WCFIN_CONFIG || {});
@@ -337,7 +337,9 @@
   // R2 direct .mp4 only — true autoplay with sound (modal opens from a
   // click, so transient activation allows play() with audio).
   // No auto-close: visitor closes manually via [X] (top-right).
-  function buildMedia(mp4Url, title) {
+  // If the primary file errors, one automatic retry hits backupMp4Url
+  // (your second copy in the bucket) before SIGNAL LOST.
+  function buildMedia(mp4Url, title, backupMp4Url) {
     const src = mp4Url || FALLBACK_MP4;
     if (!src) {
       showLoader("SIGNAL MISSING — CHECK config.js mp4Url // [X] TO CLOSE");
@@ -364,7 +366,17 @@
     v.addEventListener("playing", hideLoader);
     // Mid-stream rebuffering: cover the native spinner with our bar.
     v.addEventListener("waiting", () => showLoader("BUFFERING " + (title || "FILE") + "..."));
+    let triedBackup = false;
     v.addEventListener("error", () => {
+      if (backupMp4Url && !triedBackup) {
+        triedBackup = true;
+        showLoader("SWITCHING TO BACKUP " + (title || "FILE") + "...");
+        v.src = backupMp4Url;
+        try { const p = v.load(); } catch (e) {}
+        const kick2 = () => { try { const p = v.play(); if (p && p.catch) p.catch(() => {}); } catch (e) {} };
+        kick2();
+        return;
+      }
       showLoader("SIGNAL LOST — CHECK R2 LINK // [X] TO CLOSE");
     });
     mWrap.appendChild(v);
@@ -418,7 +430,7 @@
       mWindow.classList.remove("opening");
       mWindow.classList.add("glitch-hit");
       setTimeout(() => mWindow.classList.remove("glitch-hit"), 450);
-      buildMedia(opts.mp4Url, opts.title || "FILE");
+      buildMedia(opts.mp4Url, opts.title || "FILE", opts.backupMp4Url);
     }, 480);
   }
 
@@ -452,6 +464,7 @@
     openModal({
       title: intro.title || "BPM.VID",
       mp4Url: intro.mp4Url || FALLBACK_MP4,
+      backupMp4Url: intro.backupMp4Url || "",
       intro: true,
     });
   }
@@ -614,6 +627,7 @@
         openModal({
           title: ch.name + ".VID",
           mp4Url: ch.mp4Url || FALLBACK_MP4,
+          backupMp4Url: ch.backupMp4Url || "",
           intro: false,
         });
       });
@@ -644,6 +658,7 @@
     openModal({
       title: intro.title || "BPM.VID",
       mp4Url: intro.mp4Url || FALLBACK_MP4,
+      backupMp4Url: intro.backupMp4Url || "",
       intro: false,
     });
   });

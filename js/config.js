@@ -15,6 +15,10 @@
 
    2. VIDEOS: direct .mp4 links (Cloudflare R2).
       intro.mp4Url = full film. chapters[].mp4Url = one per chapter.
+      Each video has an optional backupMp4Url — a second copy in the
+      bucket (convention: backup/000.mp4…). If the primary errors,
+      the player retries the backup once automatically before
+      giving SIGNAL LOST.
 
    3. THUMBNAILS: still images (Cloudflare R2), e.g. 001.png.
       chapters[].thumbUrl = one PNG per chapter. Images are drawn
@@ -39,19 +43,23 @@ const WCFIN_CONFIG = {
   remotePassword: "hunter26",
 
   // ---- FULL FILM (plays once before desktop + via PLAY FULL FILM) ----
+  // Primary = H.264/faststart (plays everywhere incl. iPhone).
+  // Backup = AV1 originals (desktop Chrome).
   intro: {
     title: "BPM.VID",
-    mp4Url: R2 + "/000.mp4"
+    mp4Url: R2 + "/backup/000.mp4",
+    backupMp4Url: R2 + "/000.mp4"
   },
 
   // ---- 6 CHAPTERS (top-left -> bottom-right) ----
-  // Films on R2 (001.mp4…), thumbnails in the repo's images/ folder.
+  // Primaries = H.264, backups = AV1 originals,
+  // thumbnails in the repo's images/ folder.
   chapters: [
-    { name: "INTRODUCTION", mp4Url: R2 + "/001.mp4", thumbUrl: "images/001.png" },
-    { name: "CRUELLA",      mp4Url: R2 + "/002.mp4", thumbUrl: "images/002.png" },
-    { name: "MICAH",        mp4Url: R2 + "/003.mp4", thumbUrl: "images/003.png" },
-    { name: "VAGABOND",     mp4Url: R2 + "/004.mp4", thumbUrl: "images/004.png" },
-    { name: "HAYWOOD",      mp4Url: R2 + "/005.mp4", thumbUrl: "images/005.png" },
-    { name: "CONCLUSION",   mp4Url: R2 + "/006.mp4", thumbUrl: "images/006.png" }
+    { name: "INTRODUCTION", mp4Url: R2 + "/backup/001.mp4", backupMp4Url: R2 + "/001.mp4", thumbUrl: "images/001.png" },
+    { name: "CRUELLA",      mp4Url: R2 + "/backup/002.mp4", backupMp4Url: R2 + "/002.mp4", thumbUrl: "images/002.png" },
+    { name: "MICAH",        mp4Url: R2 + "/backup/003.mp4", backupMp4Url: R2 + "/backup/003.mp4", thumbUrl: "images/003.png" },
+    { name: "VAGABOND",     mp4Url: R2 + "/backup/004.mp4", backupMp4Url: R2 + "/backup/004.mp4", thumbUrl: "images/004.png" },
+    { name: "HAYWOOD",      mp4Url: R2 + "/backup/005.mp4", backupMp4Url: R2 + "/backup/005.mp4", thumbUrl: "images/005.png" },
+    { name: "CONCLUSION",   mp4Url: R2 + "/backup/006.mp4", backupMp4Url: R2 + "/backup/006.mp4", thumbUrl: "images/006.png" }
   ]
 };
