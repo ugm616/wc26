@@ -108,17 +108,13 @@
   let lastCdSec = -1;
   function renderCountdown() {
     const t = targetTime();
-    // Show the single GMT instant + this visitor's local equivalent,
-    // e.g. "SAT 17:00 GMT = SUN 01:00 IN MANILA". Same moment, both zones.
-    if (cdDate) {
-      cdDate.textContent = isNaN(t)
-        ? "TARGET: UNSET // SET countdownTarget IN js/config.js (GMT)"
-        : "UNLOCKS " + fmtGMT(t) + " // YOUR TIME: " + fmtLocal(t);
-    }
     if (isNaN(t)) {
-      // Invalid date -> allow entry immediately (owner hasn't set it yet)
+      // No valid target (e.g. config.js failed to load): FAIL CLOSED.
+      // Timer holds at zero and ENTER never appears — the site must
+      // never unlock early. Owner: check DevTools console + that
+      // countdownTarget in js/config.js is valid GMT.
       if (cdDisplay) cdDisplay.innerHTML = "00<span class='cd-sep'>:</span>00<span class='cd-sep'>:</span>00<span class='cd-sep'>:</span>00";
-      revealEnter();
+      try { console.error("[BPM_OS] Invalid countdownTarget — holding locked. Got:", cfg.countdownTarget); } catch (e) {}
       return;
     }
     const diff = t - Date.now();
